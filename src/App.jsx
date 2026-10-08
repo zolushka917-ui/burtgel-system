@@ -1,7 +1,4 @@
 import { useEffect, useState } from 'react'
-import * as XLSX from 'xlsx'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
 
 function App() {
   const [showForm, setShowForm] = useState(false)
@@ -9,12 +6,6 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false)
 
   const [password, setPassword] = useState('')
-
-  const [showChangePassword, setShowChangePassword] = useState(false)
-
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
 
   const [formData, setFormData] = useState({
     date: '',
@@ -30,12 +21,12 @@ function App() {
   const [search, setSearch] = useState('')
   const [editingId, setEditingId] = useState(null)
 
+  // Бүртгэлүүдийг database-ээс авах
   const loadRegistrations = async () => {
     try {
       const response = await fetch(
-        'http://localhost:5001/api/registrations'
+        'https://burtgel-backend-l2lv.onrender.com/api/registrations'
       )
-
       const data = await response.json()
 
       if (!response.ok) {
@@ -50,6 +41,7 @@ function App() {
     }
   }
 
+  // Админ орсон үед database-ээс мэдээлэл авна
   useEffect(() => {
     if (isAdmin) {
       loadRegistrations()
@@ -76,12 +68,13 @@ function App() {
     })
   }
 
+  // Шинэ бүртгэл үүсгэх
   const handleSubmit = async (e) => {
     e.preventDefault()
 
     try {
       const response = await fetch(
-        'http://localhost:5001/api/registrations',
+        'https://burtgel-backend-l2lv.onrender.com/api/registrations',
         {
           method: 'POST',
           headers: {
@@ -108,12 +101,13 @@ function App() {
     }
   }
 
+  // Админ нэвтрэх
   const handleAdminLogin = async (e) => {
     e.preventDefault()
 
     try {
       const response = await fetch(
-        'http://localhost:5001/api/login',
+       'https://burtgel-backend-l2lv.onrender.com/api/login',
         {
           method: 'POST',
           headers: {
@@ -145,56 +139,7 @@ function App() {
     }
   }
 
-  const handleChangePassword = async (e) => {
-    e.preventDefault()
-
-    if (newPassword !== confirmPassword) {
-      alert('Шинэ нууц үг хоорондоо таарахгүй байна.')
-      return
-    }
-
-    if (newPassword.length < 4) {
-      alert('Шинэ нууц үг хамгийн багадаа 4 тэмдэгт байна.')
-      return
-    }
-
-    try {
-      const response = await fetch(
-        'http://localhost:5001/api/change-password',
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            currentPassword: currentPassword,
-            newPassword: newPassword,
-          }),
-        }
-      )
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        alert(
-          data.message ||
-          'Нууц үг солиход алдаа гарлаа.'
-        )
-        return
-      }
-
-      alert('Нууц үг амжилттай солигдлоо! 🔐')
-
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-      setShowChangePassword(false)
-    } catch (error) {
-      console.error(error)
-      alert('Backend-тэй холбогдож чадсангүй.')
-    }
-  }
-
+  // Бүртгэл устгах
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       'Энэ бүртгэлийг устгах уу?'
@@ -205,14 +150,14 @@ function App() {
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:5001/api/registrations/${id}`,
-        {
-          method: 'DELETE',
-        }
-      )
+  const response = await fetch(
+    `https://burtgel-backend-l2lv.onrender.com/api/registrations/${id}`,
+    {
+      method: 'DELETE',
+    }
+  )
 
-      const data = await response.json()
+  const data = await response.json()
 
       if (!response.ok) {
         alert(data.message || 'Устгахад алдаа гарлаа.')
@@ -228,6 +173,7 @@ function App() {
     }
   }
 
+  // Бүртгэл засах
   const handleEdit = (registration) => {
     setFormData({
       date: registration.date,
@@ -241,20 +187,21 @@ function App() {
     setEditingId(registration.id)
   }
 
+  // Зассан мэдээллийг database-д хадгалах
   const handleUpdate = async (e) => {
     e.preventDefault()
 
-    try {
-      const response = await fetch(
-        `http://localhost:5001/api/registrations/${editingId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        }
-      )
+   try {
+  const response = await fetch(
+    `https://burtgel-backend-l2lv.onrender.com/api/registrations/${editingId}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    }
+  )
 
       const data = await response.json()
 
@@ -294,155 +241,9 @@ function App() {
     }
   )
 
-  // Excel татах
-  const exportToExcel = () => {
-    if (filteredRegistrations.length === 0) {
-      alert('Татах бүртгэл алга байна.')
-      return
-    }
-
-    const excelData = filteredRegistrations.map(
-      (registration, index) => ({
-        '№': index + 1,
-        'Огноо': registration.date,
-        'Овог': registration.lastName,
-        'Нэр': registration.firstName,
-        'Утас': registration.phone,
-        'Хичээл': registration.subject,
-        'Тайлбар': registration.note || '',
-      })
-    )
-
-    const worksheet = XLSX.utils.json_to_sheet(excelData)
-    const workbook = XLSX.utils.book_new()
-
-    XLSX.utils.book_append_sheet(
-      workbook,
-      worksheet,
-      'Бүртгэлүүд'
-    )
-
-    XLSX.writeFile(
-      workbook,
-      'burtgeliin-medeelel.xlsx'
-    )
-  }
-
-  // PDF татах
-  const exportToPDF = async () => {
-    if (filteredRegistrations.length === 0) {
-      alert('Татах бүртгэл алга байна.')
-      return
-    }
-
-    try {
-      const fontResponse = await fetch(
-        '/fonts/NotoSans-Regular.ttf'
-      )
-
-      if (!fontResponse.ok) {
-        throw new Error('Font файл олдсонгүй.')
-      }
-
-      const fontBuffer = await fontResponse.arrayBuffer()
-
-      let binary = ''
-      const bytes = new Uint8Array(fontBuffer)
-      const chunkSize = 8192
-
-      for (let i = 0; i < bytes.length; i += chunkSize) {
-        binary += String.fromCharCode(
-          ...bytes.subarray(
-            i,
-            Math.min(i + chunkSize, bytes.length)
-          )
-        )
-      }
-
-      const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4',
-      })
-
-      doc.addFileToVFS(
-        'NotoSans-Regular.ttf',
-        binary
-      )
-
-      doc.addFont(
-        'NotoSans-Regular.ttf',
-        'NotoSans',
-        'normal'
-      )
-
-      doc.setFont('NotoSans', 'normal')
-
-      doc.setFontSize(18)
-      doc.text(
-        'Бүртгэлийн мэдээлэл',
-        14,
-        15
-      )
-
-      doc.setFontSize(10)
-      doc.text(
-        `Нийт: ${filteredRegistrations.length} бүртгэл`,
-        14,
-        22
-      )
-
-      const tableData = filteredRegistrations.map(
-        (registration, index) => [
-          String(index + 1),
-          registration.date || '',
-          registration.lastName || '',
-          registration.firstName || '',
-          registration.phone || '',
-          registration.subject || '',
-          registration.note || '-',
-        ]
-      )
-
-      autoTable(doc, {
-        startY: 28,
-        head: [
-          [
-            '№',
-            'Огноо',
-            'Овог',
-            'Нэр',
-            'Утас',
-            'Хичээл',
-            'Тайлбар',
-          ],
-        ],
-        body: tableData,
-        styles: {
-          font: 'NotoSans',
-          fontStyle: 'normal',
-          fontSize: 8,
-        },
-        headStyles: {
-          font: 'NotoSans',
-          fontStyle: 'normal',
-          fontSize: 8,
-        },
-      })
-
-      doc.save(
-        'burtgeliin-medeelel.pdf'
-      )
-    } catch (error) {
-      console.error(error)
-      alert(
-        'PDF үүсгэхэд алдаа гарлаа. Font файлыг шалгана уу.'
-      )
-    }
-  }
-
   return (
     <div className="app">
+
       {/* Header */}
       <header className="header">
         <div>
@@ -460,6 +261,7 @@ function App() {
       {/* Нүүр */}
       {!showForm && !showAdmin && (
         <main className="home">
+
           <div className="welcome">
             <h2>Тавтай морилно уу 👋</h2>
             <p>
@@ -469,6 +271,7 @@ function App() {
           </div>
 
           <div className="home-buttons">
+
             <button
               className="main-button"
               onClick={() => setShowForm(true)}
@@ -482,20 +285,25 @@ function App() {
             >
               🔐 Админ хэсэг
             </button>
+
           </div>
+
         </main>
       )}
 
       {/* Бүртгэл үүсгэх */}
       {showForm && (
         <main className="card">
+
           <div className="card-title">
             <h2>📝 Шинэ бүртгэл</h2>
             <p>Мэдээллээ үнэн зөв бөглөнө үү.</p>
           </div>
 
           <form onSubmit={handleSubmit}>
+
             <div className="form-grid">
+
               <div className="form-group">
                 <label>Огноо</label>
                 <input
@@ -564,9 +372,11 @@ function App() {
                   onChange={handleChange}
                 />
               </div>
+
             </div>
 
             <div className="form-buttons">
+
               <button
                 type="submit"
                 className="main-button"
@@ -584,14 +394,18 @@ function App() {
               >
                 ← Буцах
               </button>
+
             </div>
+
           </form>
+
         </main>
       )}
 
       {/* Админ нэвтрэх */}
       {showAdmin && !isAdmin && (
         <main className="login-card">
+
           <div className="login-icon">
             🔐
           </div>
@@ -604,6 +418,7 @@ function App() {
           </p>
 
           <form onSubmit={handleAdminLogin}>
+
             <input
               type="password"
               placeholder="Нууц үг"
@@ -630,14 +445,19 @@ function App() {
             >
               ← Буцах
             </button>
+
           </form>
+
         </main>
       )}
 
       {/* Админ хэсэг */}
       {showAdmin && isAdmin && (
         <main className="admin">
+
+          {/* Admin top */}
           <div className="admin-top">
+
             <div>
               <h2>Админ хэсэг</h2>
               <p>
@@ -645,257 +465,145 @@ function App() {
               </p>
             </div>
 
-            <div className="form-buttons">
-              <button
-                className="secondary-button"
-                onClick={() => {
-                  setShowChangePassword(
-                    !showChangePassword
-                  )
-                  setEditingId(null)
-                }}
-              >
-                🔐 Нууц үг солих
-              </button>
+            <button
+              className="logout-button"
+              onClick={() => {
+                setIsAdmin(false)
+                setShowAdmin(false)
+                setSearch('')
+                setEditingId(null)
+                resetForm()
+              }}
+            >
+              Гарах
+            </button>
 
-              <button
-                className="logout-button"
-                onClick={() => {
-                  setIsAdmin(false)
-                  setShowAdmin(false)
-                  setSearch('')
-                  setEditingId(null)
-                  setShowChangePassword(false)
-                  setCurrentPassword('')
-                  setNewPassword('')
-                  setConfirmPassword('')
-                  resetForm()
-                }}
-              >
-                Гарах
-              </button>
-            </div>
           </div>
 
-          {showChangePassword && (
+          {/* Засах хэсэг */}
+          {editingId !== null && (
             <div className="edit-card">
-              <h3>🔐 Нууц үг солих</h3>
 
-              <form onSubmit={handleChangePassword}>
+              <h3>✏️ Бүртгэл засах</h3>
+
+              <form onSubmit={handleUpdate}>
+
                 <div className="form-grid">
+
+                  <div className="form-group">
+                    <label>Огноо</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={formData.date}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Овог</label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Нэр</label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Утас</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
                   <div className="form-group full">
-                    <label>Одоогийн нууц үг</label>
-
+                    <label>Хичээл</label>
                     <input
-                      type="password"
-                      placeholder="Одоогийн нууц үг"
-                      value={currentPassword}
-                      onChange={(e) =>
-                        setCurrentPassword(
-                          e.target.value
-                        )
-                      }
+                      type="text"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
                       required
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label>Шинэ нууц үг</label>
-
-                    <input
-                      type="password"
-                      placeholder="Шинэ нууц үг"
-                      value={newPassword}
-                      onChange={(e) =>
-                        setNewPassword(
-                          e.target.value
-                        )
-                      }
-                      required
+                  <div className="form-group full">
+                    <label>Тайлбар</label>
+                    <textarea
+                      name="note"
+                      value={formData.note}
+                      onChange={handleChange}
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label>Шинэ нууц үг давтах</label>
-
-                    <input
-                      type="password"
-                      placeholder="Шинэ нууц үгээ давтана уу"
-                      value={confirmPassword}
-                      onChange={(e) =>
-                        setConfirmPassword(
-                          e.target.value
-                        )
-                      }
-                      required
-                    />
-                  </div>
                 </div>
 
                 <div className="form-buttons">
+
                   <button
                     type="submit"
                     className="main-button"
                   >
-                    💾 Нууц үг солих
+                    💾 Өөрчлөлтийг хадгалах
                   </button>
 
                   <button
                     type="button"
                     className="secondary-button"
                     onClick={() => {
-                      setShowChangePassword(false)
-                      setCurrentPassword('')
-                      setNewPassword('')
-                      setConfirmPassword('')
+                      setEditingId(null)
+                      resetForm()
                     }}
                   >
                     Болих
                   </button>
+
                 </div>
+
               </form>
+
             </div>
           )}
 
-          {!showChangePassword &&
-            editingId !== null && (
-              <div className="edit-card">
-                <h3>✏️ Бүртгэл засах</h3>
+          {/* Search */}
+          {editingId === null && (
+            <div className="search-box">
 
-                <form onSubmit={handleUpdate}>
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label>Огноо</label>
+              <input
+                type="text"
+                placeholder="🔎 Нэр, овог, утас, хичээлээр хайх..."
+                value={search}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
+              />
 
-                      <input
-                        type="date"
-                        name="date"
-                        value={formData.date}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
+            </div>
+          )}
 
-                    <div className="form-group">
-                      <label>Овог</label>
-
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Нэр</label>
-
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Утас</label>
-
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group full">
-                      <label>Хичээл</label>
-
-                      <input
-                        type="text"
-                        name="subject"
-                        value={formData.subject}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group full">
-                      <label>Тайлбар</label>
-
-                      <textarea
-                        name="note"
-                        value={formData.note}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-buttons">
-                    <button
-                      type="submit"
-                      className="main-button"
-                    >
-                      💾 Өөрчлөлтийг хадгалах
-                    </button>
-
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => {
-                        setEditingId(null)
-                        resetForm()
-                      }}
-                    >
-                      Болих
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-          {!showChangePassword &&
-            editingId === null && (
-              <>
-                <div className="search-box">
-                  <input
-                    type="text"
-                    placeholder="🔎 Нэр, овог, утас, хичээлээр хайх..."
-                    value={search}
-                    onChange={(e) =>
-                      setSearch(e.target.value)
-                    }
-                  />
-                </div>
-
-                <div className="form-buttons">
-                  <button
-                    type="button"
-                    className="main-button"
-                    onClick={exportToExcel}
-                  >
-                    📊 Excel татах
-                  </button>
-
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={exportToPDF}
-                  >
-                    📄 PDF татах
-                  </button>
-                </div>
-              </>
-            )}
-
+          {/* Statistics */}
           <div className="statistics">
+
             <div className="stat-card">
               <span>Нийт бүртгэл</span>
-
               <strong>
                 {registrations.length}
               </strong>
@@ -903,26 +611,27 @@ function App() {
 
             <div className="stat-card">
               <span>Хайлтын үр дүн</span>
-
               <strong>
                 {filteredRegistrations.length}
               </strong>
             </div>
+
           </div>
 
+          {/* Table */}
           <div className="table-container">
+
             {filteredRegistrations.length === 0 ? (
               <div className="empty">
                 <div>📭</div>
-
                 <h3>Бүртгэл олдсонгүй</h3>
-
                 <p>
                   Хайлтад тохирох мэдээлэл байхгүй байна.
                 </p>
               </div>
             ) : (
               <table>
+
                 <thead>
                   <tr>
                     <th>№</th>
@@ -940,7 +649,10 @@ function App() {
                   {filteredRegistrations.map(
                     (registration, index) => (
                       <tr key={registration.id}>
-                        <td>{index + 1}</td>
+
+                        <td>
+                          {index + 1}
+                        </td>
 
                         <td>
                           {registration.date}
@@ -972,12 +684,11 @@ function App() {
 
                         <td>
                           <div className="action-buttons">
+
                             <button
                               className="edit-button"
                               onClick={() =>
-                                handleEdit(
-                                  registration
-                                )
+                                handleEdit(registration)
                               }
                             >
                               ✏️
@@ -993,17 +704,23 @@ function App() {
                             >
                               🗑️
                             </button>
+
                           </div>
                         </td>
+
                       </tr>
                     )
                   )}
                 </tbody>
+
               </table>
             )}
+
           </div>
+
         </main>
       )}
+
     </div>
   )
 }
