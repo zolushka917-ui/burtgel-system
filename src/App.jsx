@@ -875,20 +875,23 @@ const exportToExcel = () => {
       )}
 
      
+```jsx
 <footer
   style={{
     display: "block",
-    backgroundColor: "#172554",
-    color: "white",
-    textAlign: "center",
-    padding: "24px",
-    marginTop: "40px",
     width: "100%",
-    fontSize: "15px"
+    textAlign: "center",
+    marginTop: "60px",
+    padding: "12px 10px 20px",
+    color: "#222222",
+    backgroundColor: "transparent",
+    fontSize: "12px",
+    fontWeight: "400"
   }}
 >
   © МСС МХХАлба
 </footer>
+```
 
     </div>
   )
