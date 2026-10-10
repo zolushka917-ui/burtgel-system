@@ -603,16 +603,16 @@ tbody tr:hover {
 }
 
 
+
 .site-footer {
   display: block;
   width: 100%;
+  margin-top: 60px;
+  padding: 12px 10px 20px;
   text-align: center;
-  padding: 20px 12px;
-  margin-top: 40px;
-  color: #64748b;
-  font-size: 13px;
-  border-top: 1px solid #e2e8f0;
-  background: #ffffff;
-  position: relative;
-  z-index: 10;
+  color: #222222;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 400;
+  border: none;
 }
