@@ -601,3 +601,18 @@ tbody tr:hover {
     width: 100%;
   }
 }
+
+
+.site-footer {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 20px 12px;
+  margin-top: 40px;
+  color: #64748b;
+  font-size: 13px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  position: relative;
+  z-index: 10;
+}

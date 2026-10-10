@@ -868,10 +868,27 @@ const exportToExcel = () => {
               </table>
             )}
 
+ 
           </div>
 
         </main>
       )}
+
+     
+<footer
+  style={{
+    display: "block",
+    backgroundColor: "#172554",
+    color: "white",
+    textAlign: "center",
+    padding: "24px",
+    marginTop: "40px",
+    width: "100%",
+    fontSize: "15px"
+  }}
+>
+  © МСС МХХАлба
+</footer>
 
     </div>
   )
