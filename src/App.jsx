@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import './App.css'
+
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 function App() {
   const [showForm, setShowForm] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-
+const [isSaving, setIsSaving] = useState(false)
   const [password, setPassword] = useState('')
 
   const [formData, setFormData] = useState({
@@ -72,6 +77,10 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    if (isSaving) return
+
+    setIsSaving(true)
+
     try {
       const response = await fetch(
         'https://burtgel-backend-l2lv.onrender.com/api/registrations',
@@ -96,11 +105,13 @@ function App() {
       resetForm()
       setShowForm(false)
     } catch (error) {
-      console.error(error)
+      console.error('Бүртгэл хадгалах алдаа:', error)
       alert('Backend-тэй холбогдож чадсангүй.')
+    } finally {
+      setIsSaving(false)
     }
   }
-
+  
   // Админ нэвтрэх
   const handleAdminLogin = async (e) => {
     e.preventDefault()
@@ -136,6 +147,130 @@ function App() {
     } catch (error) {
       console.error(error)
       alert('Backend-тэй холбогдож чадсангүй.')
+    }
+  }
+// Excel татах
+const exportToExcel = () => {
+  if (registrations.length === 0) {
+    alert('Татаж авах бүртгэл алга байна.')
+    return
+  }
+
+  const data = registrations.map((registration, index) => ({
+    '№': index + 1,
+    'Огноо': registration.date,
+    'Овог': registration.lastName,
+    'Нэр': registration.firstName,
+    'Утас': registration.phone,
+    'Хичээл': registration.subject,
+    'Тайлбар': registration.note || '',
+  }))
+
+  const worksheet = XLSX.utils.json_to_sheet(data)
+  const workbook = XLSX.utils.book_new()
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    'Бүртгэл'
+  )
+
+  XLSX.writeFile(
+    workbook,
+    'burtgeliin-medeelel.xlsx'
+  )
+}  
+
+  // PDF татах
+  const exportToPDF = async () => {
+    if (registrations.length === 0) {
+      alert('Татаж авах бүртгэл алга байна.')
+      return
+    }
+
+    try {
+      // Монгол үсгийн фонт унших
+      const response = await fetch('/fonts/NotoSans-Regular.ttf')
+
+      if (!response.ok) {
+        throw new Error('Фонтын файл олдсонгүй.')
+      }
+
+      const fontBuffer = await response.arrayBuffer()
+      const fontBytes = new Uint8Array(fontBuffer)
+
+      let binary = ''
+      const chunkSize = 0x8000
+
+      for (let i = 0; i < fontBytes.length; i += chunkSize) {
+        binary += String.fromCharCode(
+          ...fontBytes.subarray(i, i + chunkSize)
+        )
+      }
+
+      const fontBase64 = window.btoa(binary)
+
+      // PDF үүсгэх
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      })
+
+      // Монгол фонт бүртгэх
+      doc.addFileToVFS('NotoSans-Regular.ttf', fontBase64)
+      doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal')
+      doc.setFont('NotoSans')
+
+      // Гарчиг
+      doc.setFontSize(16)
+      doc.text('Бүртгэлийн мэдээлэл', 14, 15)
+
+      // Бүртгэлийн мөрүүд
+      const rows = registrations.map((registration, index) => [
+        String(index + 1),
+        registration.date || '',
+        registration.lastName || '',
+        registration.firstName || '',
+        registration.phone || '',
+        registration.subject || '',
+        registration.note || '-',
+      ])
+
+      // Хүснэгт үүсгэх
+      autoTable(doc, {
+        head: [[
+          '№',
+          'Огноо',
+          'Овог',
+          'Нэр',
+          'Утас',
+          'Хичээл',
+          'Тайлбар',
+        ]],
+        body: rows,
+        startY: 23,
+        styles: {
+          font: 'NotoSans',
+          fontSize: 8,
+          cellPadding: 3,
+          overflow: 'linebreak',
+        },
+        headStyles: {
+          font: 'NotoSans',
+          fontStyle: 'normal',
+        },
+        margin: {
+          left: 10,
+          right: 10,
+        },
+      })
+
+      // PDF файл татах
+      doc.save('burtgeliin-medeelel.pdf')
+    } catch (error) {
+      console.error('PDF алдаа:', error)
+      alert('PDF үүсгэхэд алдаа гарлаа. Фонтын файл болон Console-ийг шалгана уу.')
     }
   }
 
@@ -584,6 +719,7 @@ function App() {
           )}
 
           {/* Search */}
+                    {/* Search */}
           {editingId === null && (
             <div className="search-box">
 
@@ -595,6 +731,22 @@ function App() {
                   setSearch(e.target.value)
                 }
               />
+
+              <div className="export-buttons">
+                <button
+                  className="excel-button"
+                  onClick={exportToExcel}
+                >
+                  📊 Excel татах
+                </button>
+
+                <button
+                  className="pdf-button"
+                  onClick={exportToPDF}
+                >
+                  📄 PDF татах
+                </button>
+              </div>
 
             </div>
           )}
