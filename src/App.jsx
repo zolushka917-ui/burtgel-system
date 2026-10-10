@@ -875,7 +875,7 @@ const exportToExcel = () => {
       )}
 
      
-```jsx
+
 <footer
   style={{
     display: "block",
@@ -891,7 +891,7 @@ const exportToExcel = () => {
 >
   © МСС МХХАлба
 </footer>
-```
+
 
     </div>
   )
