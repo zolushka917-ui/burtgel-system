@@ -492,17 +492,32 @@ const exportToExcel = () => {
                 />
               </div>
 
-              <div className="form-group">
-                <label>Утасны дугаар</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="99112233"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+        
+<div className="form-group">
+  <label>Утасны дугаар</label>
+  <input
+    type="text"
+    name="phone"
+    placeholder="99112233"
+    value={formData.phone}
+    onChange={(e) => {
+      const digits = e.target.value
+        .replace(/[^0-9]/g, '')
+        .slice(0, 8)
+
+      setFormData((prev) => ({
+        ...prev,
+        phone: digits,
+      }))
+    }}
+    inputMode="numeric"
+    maxLength={8}
+    minLength={8}
+    pattern="[0-9]{8}"
+    title="Утасны дугаар яг 8 оронтой байх ёстой."
+    required
+  />
+</div>
 
               <div className="form-group full">
                 <label>Хичээл</label>
@@ -678,13 +693,27 @@ const exportToExcel = () => {
 
                   <div className="form-group">
                     <label>Утас</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      required
-                    />
+                    
+
+<input
+  type="text"
+  name="phone"
+  value={formData.phone}
+  onChange={(e) => {
+    const digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 8)
+    setFormData((prev) => ({
+      ...prev,
+      phone: digits,
+    }))
+  }}
+  inputMode="numeric"
+  pattern="[0-9]{8}"
+  maxLength={8}
+  minLength={8}
+  placeholder="8 оронтой дугаар"
+  title="Утасны дугаар яг 8 оронтой байх ёстой."
+  required
+/>
                   </div>
 
                   <div className="form-group full">
