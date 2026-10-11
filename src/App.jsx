@@ -326,19 +326,25 @@ const exportToExcel = () => {
     }
   }
 
-  // Бүртгэл засах
-  const handleEdit = (registration) => {
-    setFormData({
-      date: registration.date,
-      lastName: registration.lastName,
-      firstName: registration.firstName,
-      phone: registration.phone,
-      subject: registration.subject || '',
-      note: registration.note || '',
-    })
+// Бүртгэл засах
+const handleEdit = (registration) => {
+  const dateValue = registration.date
+    ? String(registration.date).slice(0, 16)
+    : ''
 
-    setEditingId(registration.id)
-  }
+  setFormData({
+    date: dateValue,
+    lastName: registration.lastName || '',
+    firstName: registration.firstName || '',
+    phone: registration.phone || '',
+    subject: registration.subject || '',
+    note: registration.note || '',
+  })
+
+  setEditingId(registration.id)
+}
+
+
 
   // Зассан мэдээллийг database-д хадгалах
   const handleUpdate = async (e) => {
@@ -470,26 +476,51 @@ const exportToExcel = () => {
 
               <div className="form-group">
                 <label>Овог</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  placeholder="Овог"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  required
-                />
+<input
+  type="text"
+  name="lastName"
+  value={formData.lastName}
+  onChange={(e) => {
+    const letters = e.target.value.replace(
+      /[^a-zA-Zа-яА-ЯөүӨҮёЁ\s]/g,
+      ''
+    )
+
+    setFormData((prev) => ({
+      ...prev,
+      lastName: letters,
+    }))
+  }}
+  placeholder="Овог"
+  required
+/>
+
+
               </div>
 
               <div className="form-group">
                 <label>Нэр</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  placeholder="Нэр"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  required
-                />
+               
+<input
+  type="text"
+  name="firstName"
+  value={formData.firstName}
+  onChange={(e) => {
+    const letters = e.target.value.replace(
+      /[^a-zA-Zа-яА-ЯөүӨҮёЁ\s]/g,
+      ''
+    )
+
+    setFormData((prev) => ({
+      ...prev,
+      firstName: letters,
+    }))
+  }}
+  placeholder="Нэр"
+  required
+/>
+
+
               </div>
 
         
@@ -671,24 +702,50 @@ const exportToExcel = () => {
 
                   <div className="form-group">
                     <label>Овог</label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                      required
-                    />
+                    
+<input
+  type="text"
+  name="lastName"
+  value={formData.lastName}
+  onChange={(e) => {
+    const letters = e.target.value.replace(
+      /[^a-zA-Zа-яА-ЯөүӨҮёЁ\s]/g,
+      ''
+    )
+
+    setFormData((prev) => ({
+      ...prev,
+      lastName: letters,
+    }))
+  }}
+  placeholder="Овог"
+  required
+/>
+
+
                   </div>
 
                   <div className="form-group">
                     <label>Нэр</label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                      required
-                    />
+<input
+  type="text"
+  name="firstName"
+  value={formData.firstName}
+  onChange={(e) => {
+    const letters = e.target.value.replace(
+      /[^a-zA-Zа-яА-ЯөүӨҮёЁ\s]/g,
+      ''
+    )
+
+    setFormData((prev) => ({
+      ...prev,
+      firstName: letters,
+    }))
+  }}
+  placeholder="Нэр"
+  required
+/>
+
                   </div>
 
                   <div className="form-group">
