@@ -584,17 +584,33 @@ function App() {
                 />
               </div>
 
-              <div className="form-group full">
-                <label>Хичээл</label>
-                <input
-                  type="text"
-                  name="subject"
-                  placeholder="Хичээлийн нэр"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+             
+<div className="form-group full">
+  <label>Хичээл</label>
+  <select
+    name="subject"
+    value={formData.subject}
+    onChange={handleChange}
+    required
+  >
+    <option value="">Хичээлээ сонгоно уу</option>
+    <option value="Харагддаг ба харагддаггүй ертөнц">1. Харагддаг ба харагддаггүй ертөнц</option>
+    <option value="Бурханы бүтээл хүн">2. Бурханы бүтээл хүн</option>
+    <option value="Бурхан хүний холбоо">3. Бурхан хүний холбоо</option>
+    <option value="Шашин бүрийн урсгал ба судар">4. Шашин бүрийн урсгал ба судар</option>
+    <option value="Уулзалтын ерөөл">5. Уулзалтын ерөөл</option>
+    <option value="Үзэсгэлэнтэй ариун сүм">6. Үзэсгэлэнтэй ариун сүм</option>
+    <option value="Хариултаа авдаг залбирал">7. Хариултаа авдаг залбирал</option>
+    <option value="Бурхан ба Библи">8. Бурхан ба Библи</option>
+    <option value="Урсгалыг давсан үг">9. Урсгалыг давсан үг</option>
+    <option value="Бүтээгч Бурхан, Бурханы хүүхдүүд, Тэнгэрийн хаанчлалын хөвгүүд">10. Бүтээгч Бурхан, Бурханы хүүхдүүд, Тэнгэрийн хаанчлалын хөвгүүд</option>
+    <option value="Тэнгэр газар">11. Тэнгэр газар</option>
+    <option value="Үнэн ба худлыг ялгах">12. Үнэн ба худлыг ялгах</option>
+    <option value="Хүн нь ямар нэгэн бэ?">13. Хүн нь ямар нэгэн бэ?</option>
+    <option value="Бурхан ба үгийг голчилсон итгэгч">14. Бурхан ба үгийг голчилсон итгэгч</option>
+    <option value="Сорилт, мэхлэлт, хавчилт ба ялалт">15. Сорилт, мэхлэлт, хавчилт ба ялалт</option>
+  </select>
+</div>
 
               <div className="form-group full">
                 <label>Тайлбар</label>
@@ -775,16 +791,33 @@ function App() {
                     />
                   </div>
 
-                  <div className="form-group full">
-                    <label>Хичээл</label>
-                    <input
-                      type="text"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
+                 
+<div className="form-group full">
+  <label>Хичээл</label>
+  <select
+    name="subject"
+    value={formData.subject}
+    onChange={handleChange}
+    required
+  >
+    <option value="">Хичээлээ сонгоно уу</option>
+    <option value="Харагддаг ба харагддаггүй ертөнц">1. Харагддаг ба харагддаггүй ертөнц</option>
+    <option value="Бурханы бүтээл хүн">2. Бурханы бүтээл хүн</option>
+    <option value="Бурхан хүний холбоо">3. Бурхан хүний холбоо</option>
+    <option value="Шашин бүрийн урсгал ба судар">4. Шашин бүрийн урсгал ба судар</option>
+    <option value="Уулзалтын ерөөл">5. Уулзалтын ерөөл</option>
+    <option value="Үзэсгэлэнтэй ариун сүм">6. Үзэсгэлэнтэй ариун сүм</option>
+    <option value="Хариултаа авдаг залбирал">7. Хариултаа авдаг залбирал</option>
+    <option value="Бурхан ба Библи">8. Бурхан ба Библи</option>
+    <option value="Урсгалыг давсан үг">9. Урсгалыг давсан үг</option>
+    <option value="Бүтээгч Бурхан, Бурханы хүүхдүүд, Тэнгэрийн хаанчлалын хөвгүүд">10. Бүтээгч Бурхан, Бурханы хүүхдүүд, Тэнгэрийн хаанчлалын хөвгүүд</option>
+    <option value="Тэнгэр газар">11. Тэнгэр газар</option>
+    <option value="Үнэн ба худлыг ялгах">12. Үнэн ба худлыг ялгах</option>
+    <option value="Хүн нь ямар нэгэн бэ?">13. Хүн нь ямар нэгэн бэ?</option>
+    <option value="Бурхан ба үгийг голчилсон итгэгч">14. Бурхан ба үгийг голчилсон итгэгч</option>
+    <option value="Сорилт, мэхлэлт, хавчилт ба ялалт">15. Сорилт, мэхлэлт, хавчилт ба ялалт</option>
+  </select>
+</div>
 
                   <div className="form-group full">
                     <label>Тайлбар</label>

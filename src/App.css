@@ -194,11 +194,14 @@ button {
   color: #334155;
 }
 
+
 .form-group input,
 .form-group textarea,
+.form-group select,
 .login-card input,
 .search-box input {
   width: 100%;
+  box-sizing: border-box;
   border: 1px solid #dbe2ea;
   border-radius: 11px;
   padding: 12px 14px;
@@ -207,6 +210,8 @@ button {
   color: #1e293b;
   transition: 0.2s;
 }
+  
+
 
 .form-group input:focus,
 .form-group textarea:focus,
@@ -755,4 +760,10 @@ tbody tr:hover {
 
 .modal-actions .delete-button:hover {
   background: #be185d;
+}
+
+/* Хичээл сонгох жагсаалтын өргөн */
+.form-group select {
+  width: 100%;
+  box-sizing: border-box;
 }
