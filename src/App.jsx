@@ -94,6 +94,30 @@ setRegistrations(data)
   // Шинэ бүртгэл үүсгэх
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!formData.date) {
+  alert('Огноо, цагийг оруулна уу.')
+  return
+}
+
+if (!formData.lastName.trim()) {
+  alert('Овог оруулна уу.')
+  return
+}
+
+if (!formData.firstName.trim()) {
+  alert('Нэр оруулна уу.')
+  return
+}
+
+if (!/^[0-9]{8}$/.test(formData.phone)) {
+  alert('Утасны дугаар яг 8 оронтой байх ёстой.')
+  return
+}
+
+if (!formData.subject.trim()) {
+  alert('Хичээлийн нэрийг оруулна уу.')
+  return
+}
 
     if (isSaving) return
 
@@ -360,6 +384,30 @@ const handleEdit = (registration) => {
   // Зассан мэдээллийг database-д хадгалах
   const handleUpdate = async (e) => {
     e.preventDefault()
+    if (!formData.date) {
+  alert('Огноо, цагийг оруулна уу.')
+  return
+}
+
+if (!formData.lastName.trim()) {
+  alert('Овог оруулна уу.')
+  return
+}
+
+if (!formData.firstName.trim()) {
+  alert('Нэр оруулна уу.')
+  return
+}
+
+if (!/^[0-9]{8}$/.test(formData.phone)) {
+  alert('Утасны дугаар яг 8 оронтой байх ёстой.')
+  return
+}
+
+if (!formData.subject.trim()) {
+  alert('Хичээлийн нэрийг оруулна уу.')
+  return
+}
 
    try {
   const response = await fetch(
@@ -472,7 +520,7 @@ loadRegistrations()
             <p>Мэдээллээ үнэн зөв бөглөнө үү.</p>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
 
             <div className="form-grid">
 
@@ -698,7 +746,7 @@ loadRegistrations()
 
               <h3>✏️ Бүртгэл засах</h3>
 
-              <form onSubmit={handleUpdate}>
+              <form onSubmit={handleUpdate} noValidate>
 
                 <div className="form-grid">
 
