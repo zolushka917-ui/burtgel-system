@@ -4,7 +4,23 @@ import './App.css'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+function getCurrentDateTime() {
+  const now = new Date()
+  const localTime = new Date(
+    now.getTime() - now.getTimezoneOffset() * 60000
+  )
+  return localTime.toISOString().slice(0, 16)
+}
 
+function formatDateTime(value) {
+  if (!value) return ''
+
+  const [datePart, timePart = ''] = value.split('T')
+  const [year, month, day] = datePart.split('-')
+  const time = timePart.slice(0, 5)
+
+  return `${day}.${month}.${year} ${time}`
+}
 function App() {
   const [showForm, setShowForm] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
@@ -13,7 +29,7 @@ const [isSaving, setIsSaving] = useState(false)
   const [password, setPassword] = useState('')
 
   const [formData, setFormData] = useState({
-    date: '',
+    date: getCurrentDateTime(),
     lastName: '',
     firstName: '',
     phone: '',
@@ -64,7 +80,7 @@ const [isSaving, setIsSaving] = useState(false)
 
   const resetForm = () => {
     setFormData({
-      date: '',
+    date: getCurrentDateTime(),
       lastName: '',
       firstName: '',
       phone: '',
@@ -158,7 +174,7 @@ const exportToExcel = () => {
 
   const data = registrations.map((registration, index) => ({
     '№': index + 1,
-    'Огноо': registration.date,
+    'Огноо': registration.date?.replace('T', ',\n'),
     'Овог': registration.lastName,
     'Нэр': registration.firstName,
     'Утас': registration.phone,
@@ -229,7 +245,9 @@ const exportToExcel = () => {
       // Бүртгэлийн мөрүүд
       const rows = registrations.map((registration, index) => [
         String(index + 1),
-        registration.date || '',
+        registration.date
+  ? registration.date.replace('T', ',\n')
+  : '',
         registration.lastName || '',
         registration.firstName || '',
         registration.phone || '',
@@ -442,7 +460,7 @@ const exportToExcel = () => {
               <div className="form-group">
                 <label>Огноо</label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
@@ -628,7 +646,7 @@ const exportToExcel = () => {
                   <div className="form-group">
                     <label>Огноо</label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       name="date"
                       value={formData.date}
                       onChange={handleChange}
@@ -806,9 +824,16 @@ const exportToExcel = () => {
                           {index + 1}
                         </td>
 
-                        <td>
-                          {registration.date}
-                        </td>
+                       <td
+  style={{
+    textAlign: 'center',
+    verticalAlign: 'middle',
+    whiteSpace: 'pre-line',
+    lineHeight: '1.6'
+  }}
+>
+  {registration.date?.replace('T', ',\n')}
+</td>
 
                         <td>
                           {registration.lastName}
