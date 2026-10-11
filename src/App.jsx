@@ -99,10 +99,13 @@ function App() {
     });
   };
 
-  // Шинэ бүртгэл үүсгэх
 
+  // Шинэ бүртгэл үүсгэх
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Давхар даралтаас хамгаалах
+    if (isSaving) return;
 
     if (!formData.date) {
       showNotice("Огноо, цагийг оруулна уу.", "error");
@@ -129,8 +132,6 @@ function App() {
       return;
     }
 
-    if (isSaving) return;
-
     setIsSaving(true);
 
     try {
@@ -142,29 +143,29 @@ function App() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(formData),
-        },
+        }
       );
-
-      const data = await response.json();
 
       if (!response.ok) {
         showNotice(
           "Бүртгэл хадгалахад алдаа гарлаа. Дахин оролдоно уу.",
-          "error",
+          "error"
         );
         return;
       }
 
       showNotice("Бүртгэл амжилттай хадгалагдлаа!", "success");
-
       resetForm();
       setShowForm(false);
     } catch (error) {
       console.error("Бүртгэл хадгалах алдаа:", error);
+
       showNotice(
         "Сервертэй холбогдож чадсангүй. Интернэт холболтоо шалгаад дахин оролдоно уу.",
-        "error",
+        "error"
       );
+    } finally {
+      // Амжилттай эсвэл алдаатай байсан ч товчийг дахин идэвхжүүлнэ
       setIsSaving(false);
     }
   };
