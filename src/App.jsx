@@ -50,16 +50,18 @@ const [isSaving, setIsSaving] = useState(false)
       )
       const data = await response.json()
 
-      if (!response.ok) {
-        alert(data.message || 'Бүртгэл авахад алдаа гарлаа.')
-        return
-      }
+     
+if (!response.ok) {
+  alert('Бүртгэлийн мэдээлэл авахад алдаа гарлаа. Дахин оролдоно уу.')
+  return
+}
 
-      setRegistrations(data)
-    } catch (error) {
-      console.error(error)
-      alert('Backend-тэй холбогдож чадсангүй.')
-    }
+setRegistrations(data)
+} catch (error) {
+  console.error('Бүртгэл ачаалахад алдаа:', error)
+  alert('Сервертэй холбогдож чадсангүй. Интернэт холболтоо шалгаад дахин оролдоно уу.')
+}
+
   }
 
   // Админ орсон үед database-ээс мэдээлэл авна
@@ -111,21 +113,24 @@ const [isSaving, setIsSaving] = useState(false)
 
       const data = await response.json()
 
-      if (!response.ok) {
-        alert(data.message || 'Бүртгэл хадгалахад алдаа гарлаа.')
-        return
-      }
+     
+if (!response.ok) {
+  alert('Бүртгэл хадгалахад алдаа гарлаа. Дахин оролдоно уу.')
+  return
+}
 
-      alert('Бүртгэл амжилттай хадгалагдлаа!')
+alert('Бүртгэл амжилттай хадгалагдлаа!')
 
-      resetForm()
-      setShowForm(false)
-    } catch (error) {
-      console.error('Бүртгэл хадгалах алдаа:', error)
-      alert('Backend-тэй холбогдож чадсангүй.')
-    } finally {
-      setIsSaving(false)
-    }
+resetForm()
+setShowForm(false)
+} catch (error) {
+  console.error('Бүртгэл хадгалах алдаа:', error)
+  alert('Сервертэй холбогдож чадсангүй. Интернэт холболтоо шалгаад дахин оролдоно уу.')
+} finally {
+  setIsSaving(false)
+}
+
+
   }
   
   // Админ нэвтрэх
@@ -149,21 +154,21 @@ const [isSaving, setIsSaving] = useState(false)
 
       const data = await response.json()
 
-      if (!response.ok) {
-        alert(
-          data.message ||
-          'Нэвтрэх нэр эсвэл нууц үг буруу байна.'
-        )
-        return
-      }
+    
+if (!response.ok) {
+  alert('Нэвтрэх нэр эсвэл нууц үг буруу байна. Дахин шалгаад оролдоно уу.')
+  return
+}
 
-      setIsAdmin(true)
-      setShowAdmin(true)
-      setPassword('')
-    } catch (error) {
-      console.error(error)
-      alert('Backend-тэй холбогдож чадсангүй.')
-    }
+setIsAdmin(true)
+setShowAdmin(true)
+setPassword('')
+} catch (error) {
+  console.error('Админ нэвтрэхэд алдаа:', error)
+  alert('Сервертэй холбогдож чадсангүй. Интернэт холболтоо шалгаад дахин оролдоно уу.')
+}
+
+
   }
 // Excel татах
 const exportToExcel = () => {
@@ -286,10 +291,13 @@ const exportToExcel = () => {
 
       // PDF файл татах
       doc.save('burtgeliin-medeelel.pdf')
-    } catch (error) {
-      console.error('PDF алдаа:', error)
-      alert('PDF үүсгэхэд алдаа гарлаа. Фонтын файл болон Console-ийг шалгана уу.')
-    }
+   
+} catch (error) {
+  console.error('PDF үүсгэхэд гарсан алдаа:', error)
+  alert('PDF файл үүсгэж чадсангүй. Дахин оролдоно уу. Алдаа давтагдвал техникийн тусламж авна уу.')
+}
+
+
   }
 
   // Бүртгэл устгах
@@ -312,18 +320,21 @@ const exportToExcel = () => {
 
   const data = await response.json()
 
-      if (!response.ok) {
-        alert(data.message || 'Устгахад алдаа гарлаа.')
-        return
-      }
+   
+if (!response.ok) {
+  alert('Бүртгэл устгахад алдаа гарлаа. Дахин оролдоно уу.')
+  return
+}
 
-      alert('Бүртгэл устгагдлаа!')
+alert('Бүртгэл амжилттай устгагдлаа!')
 
-      loadRegistrations()
-    } catch (error) {
-      console.error(error)
-      alert('Backend-тэй холбогдож чадсангүй.')
-    }
+loadRegistrations()
+} catch (error) {
+  console.error('Бүртгэл устгахад гарсан алдаа:', error)
+  alert('Сервертэй холбогдож чадсангүй. Интернэт холболтоо шалгаад дахин оролдоно уу.')
+}
+
+
   }
 
 // Бүртгэл засах
@@ -364,21 +375,23 @@ const handleEdit = (registration) => {
 
       const data = await response.json()
 
-      if (!response.ok) {
-        alert(data.message || 'Засахад алдаа гарлаа.')
-        return
-      }
+    
+if (!response.ok) {
+  alert('Бүртгэл засахад алдаа гарлаа. Дахин оролдоно уу.')
+  return
+}
 
-      alert('Бүртгэл амжилттай засагдлаа!')
+alert('Бүртгэл амжилттай засагдлаа!')
 
-      resetForm()
-      setEditingId(null)
+resetForm()
+setEditingId(null)
 
-      loadRegistrations()
-    } catch (error) {
-      console.error(error)
-      alert('Backend-тэй холбогдож чадсангүй.')
-    }
+loadRegistrations()
+} catch (error) {
+  console.error('Бүртгэл засахад гарсан алдаа:', error)
+  alert('Сервертэй холбогдож чадсангүй. Интернэт холболтоо шалгаад дахин оролдоно уу.')
+}
+
   }
 
   const filteredRegistrations = registrations.filter(
