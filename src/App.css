@@ -609,8 +609,12 @@ tbody tr:hover {
 
 
 
+
+
 .site-footer {
   display: block;
+  position: relative;
+  top: 20px;
   width: 100%;
   margin-top: 60px;
   padding: 12px 10px 20px;
@@ -621,6 +625,8 @@ tbody tr:hover {
   font-weight: 400;
   border: none;
 }
+
+
 
 /* Modal цонх */
 .modal-overlay {
@@ -766,4 +772,329 @@ tbody tr:hover {
 .form-group select {
   width: 100%;
   box-sizing: border-box;
+}
+
+/* Утасны бүртгэлийн карт */
+.mobile-registration-list {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .table-container {
+    display: none;
+  }
+
+  .mobile-registration-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .mobile-registration-card {
+    width: 100%;
+    min-width: 0;
+    padding: 17px;
+    background: #ffffff;
+    border: 1px solid #e8edf5;
+    border-radius: 16px;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06);
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-card-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .mobile-number {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .mobile-person-name {
+    margin: 0 0 15px;
+    color: #172554;
+    font-size: 19px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mobile-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .mobile-detail > span {
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  .mobile-detail > strong {
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 17px;
+    padding-top: 14px;
+    border-top: 1px solid #eef2f7;
+  }
+
+  .mobile-card-actions button {
+    flex: 1;
+    width: auto;
+    min-height: 42px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+}
+/* Утасны дэлгэцийн хэмжээг засах */
+@media (max-width: 700px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    overflow-x: hidden;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  .admin,
+  .admin-top,
+  .statistics,
+  .mobile-registration-list,
+  .mobile-registration-card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin {
+    width: 100%;
+    padding: 18px 12px;
+  }
+
+  .mobile-registration-card {
+    width: 100%;
+    padding: 14px;
+    overflow: hidden;
+  }
+
+  .mobile-card-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .mobile-card-heading .subject {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .mobile-person-name,
+  .mobile-detail,
+  .mobile-detail strong,
+  .mobile-detail span {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .mobile-card-actions {
+    min-width: 0;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .mobile-card-actions button {
+    min-width: 0;
+    padding: 8px 5px;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+/* Өдрөөр шүүх */
+.date-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.date-filter label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.date-filter select {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px;
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  background: #fff;
+}
+
+/* Хуудаслалт */
+.pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.pagination-summary {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+}
+
+.pagination-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.pagination-controls button {
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pagination-number {
+  min-width: 38px;
+  border: 1px solid #dbe2ea;
+  background: #fff;
+  color: #334155;
+}
+
+.pagination-number.active {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.pagination-ellipsis {
+  padding: 0 3px;
+  color: #64748b;
+}
+
+/* Компьютер дээрх Өдрөөр харах хэсэг */
+@media (min-width: 701px) {
+  .date-filter {
+    min-width: 280px;
+    gap: 10px;
+    margin: 28px 0;
+    padding: 8px 0;
+  }
+
+  .date-filter label {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .date-filter select {
+    min-height: 54px;
+    padding: 12px 16px;
+    font-size: 17px;
+    border-radius: 12px;
+  }
+}
+
+/* Утасны дэлгэц */
+@media (max-width: 700px) {
+.date-filter {
+width: 100%;
+min-width: 0;
+gap: 8px;
+box-sizing: border-box;
+}
+
+.date-filter label {
+font-size: 15px;
+font-weight: 700;
+}
+
+.date-filter select {
+width: 100%;
+min-height: 56px;
+padding: 14px 16px;
+font-size: 18px;
+border-radius: 12px;
+box-sizing: border-box;
+}
+
+.pagination-controls {
+width: 100%;
+gap: 5px;
+}
+
+.pagination-controls button {
+min-height: 40px;
+padding: 8px 9px;
+}
+}
+.home-footer {
+  width: 100%;
+  text-align: center;
+  margin-top: 30px;
+  margin-bottom: 25px;
+  padding: 12px 10px;
+  color: #222222;
+  font-size: 12px;
+  font-weight: 400;
 }
