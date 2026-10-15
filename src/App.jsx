@@ -1086,7 +1086,7 @@ function App() {
     display: "block",
     width: "100%",
     textAlign: "center",
-    marginTop: !showForm && !showAdmin ? "20px" : "500px",
+    marginTop: !showForm && !showAdmin ? "20px" : "80px",
     padding: "12px 10px 20px",
     color: "#222222",
     backgroundColor: "transparent",
