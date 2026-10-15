@@ -8,7 +8,7 @@ const app = express()
 const PORT = process.env.PORT || 5001
 
 app.use(express.json())
-app.use(cors())
+app.use(cors({ maxAge: 86400 }))
 
 app.get('/', (req, res) => {
   res.send('Backend ажиллаж байна!')
