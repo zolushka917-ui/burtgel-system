@@ -600,11 +600,6 @@ function App() {
   <p>Бүртгэл үүсгэх эсвэл админ хэсэгт нэвтэрнэ үү.</p>
 </div>
 
-<footer className="home-footer">
-  © МСС МХХАлба
-</footer>
-
-<div className="home-buttons">
 
           <div className="home-buttons">
             <button
@@ -1091,7 +1086,7 @@ function App() {
     display: "block",
     width: "100%",
     textAlign: "center",
-    marginTop: !showForm && !showAdmin ? "20px" : "150px",
+    marginTop: !showForm && !showAdmin ? "20px" : "500px",
     padding: "12px 10px 20px",
     color: "#222222",
     backgroundColor: "transparent",
