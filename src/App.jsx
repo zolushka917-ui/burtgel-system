@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import * as XLSX from "xlsx";
@@ -6,6 +7,9 @@ import autoTable from "jspdf-autotable";
 
 const API_URL =
   "https://burtgel-backend-l2lv.onrender.com/api/registrations";
+
+const LOGIN_URL =
+  "https://burtgel-backend-l2lv.onrender.com/api/login";
 
 function getCurrentDateTime() {
   const now = new Date();
@@ -17,17 +21,26 @@ function getCurrentDateTime() {
 
 function formatDateTime(value) {
   if (!value) return "";
+
   const [datePart, timePart = ""] = String(value).split("T");
   const [year, month, day] = datePart.split("-");
+
+  if (!year || !month || !day) return String(value);
+
   return `${day}.${month}.${year} ${timePart.slice(0, 5)}`;
 }
 
+function getFullName(registration) {
+  return `${registration.lastName || ""} ${
+    registration.firstName || ""
+  }`.trim();
+}
 
 function App() {
-
   const [showForm, setShowForm] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
   const [modal, setModal] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -39,6 +52,8 @@ function App() {
     firstName: "",
     phone: "",
     subject: "",
+    invitedBy: "",
+    teacher: "",
     note: "",
   });
 
@@ -46,418 +61,16 @@ function App() {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
 
-  // Шинэ: өдөр сонгох болон хуудаслалт
   const [selectedDate, setSelectedDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
   const itemsPerPage = 10;
 
   const showNotice = (message, type = "info") => {
     setModal({ message, type });
   };
 
-  // Бүртгэлүүдийг database-ээс авах
-  const loadRegistrations = async () => {
-    try {
-      const response = await fetch(API_URL);
-      const data = await response.json();
-
-      if (!response.ok) {
-        showNotice(
-          "Бүртгэлийн мэдээлэл авахад алдаа гарлаа.",
-          "error"
-        );
-        return;
-      }
-
-      setRegistrations(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Бүртгэл ачаалахад алдаа:", error);
-      showNotice(
-        "Сервертэй холбогдож чадсангүй. Интернэтээ шалгана уу.",
-        "error"
-      );
-    }
-  };
-
-  useEffect(() => {
-    if (isAdmin) {
-      loadRegistrations();
-    }
-  }, [isAdmin]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      date: getCurrentDateTime(),
-      lastName: "",
-      firstName: "",
-      phone: "",
-      subject: "",
-      note: "",
-    });
-  };
-
-  // Шинэ бүртгэл үүсгэх
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (isSaving) return;
-
-    if (!formData.date) {
-      showNotice("Огноо, цагийг оруулна уу.", "error");
-      return;
-    }
-
-    if (!formData.lastName.trim()) {
-      showNotice("Овог оруулна уу.", "error");
-      return;
-    }
-
-    if (!formData.firstName.trim()) {
-      showNotice("Нэр оруулна уу.", "error");
-      return;
-    }
-
-    if (!/^[0-9]{8}$/.test(formData.phone)) {
-      showNotice("Утасны дугаар яг 8 оронтой байх ёстой.", "error");
-      return;
-    }
-
-    if (!formData.subject.trim()) {
-      showNotice("Хичээлийн нэрийг сонгоно уу.", "error");
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        showNotice("Бүртгэл хадгалахад алдаа гарлаа.", "error");
-        return;
-      }
-
-      showNotice("Бүртгэл амжилттай хадгалагдлаа!", "success");
-      resetForm();
-      setShowForm(false);
-
-      if (isAdmin) {
-        await loadRegistrations();
-      }
-    } catch (error) {
-      console.error("Бүртгэл хадгалах алдаа:", error);
-      showNotice(
-        "Сервертэй холбогдож чадсангүй. Дахин оролдоно уу.",
-        "error"
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  
-  // Админ нэвтрэх
-  const handleAdminLogin = async (e) => {
-    e.preventDefault();
-
-    if (isLoggingIn) return;
-
-    setIsLoggingIn(true);
-
-    try {
-      const response = await fetch(
-        "https://burtgel-backend-l2lv.onrender.com/api/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: "admin",
-            password,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        showNotice(
-          "Нэвтрэх нэр эсвэл нууц үг буруу байна.",
-          "error"
-        );
-        return;
-      }
-
-      setIsAdmin(true);
-      setShowAdmin(true);
-      setPassword("");
-    } catch (error) {
-      console.error("Админ нэвтрэхэд алдаа:", error);
-      showNotice("Сервертэй холбогдож чадсангүй.", "error");
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-  // Excel татах — бүх бүртгэл
-  const exportToExcel = () => {
-    if (registrations.length === 0) {
-      showNotice("Татаж авах бүртгэл алга байна.", "error");
-      return;
-    }
-
-    const data = registrations.map((registration, index) => ({
-      "№": index + 1,
-      Огноо: formatDateTime(registration.date),
-      Овог: registration.lastName,
-      Нэр: registration.firstName,
-      Утас: registration.phone,
-      Хичээл: registration.subject,
-      Тайлбар: registration.note || "",
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Бүртгэл");
-    XLSX.writeFile(workbook, "burtgeliin-medeelel.xlsx");
-  };
-
-  // PDF татах — бүх бүртгэл
-  const exportToPDF = async () => {
-    if (registrations.length === 0) {
-      showNotice("Татаж авах бүртгэл алга байна.", "error");
-      return;
-    }
-
-    try {
-      const response = await fetch("/fonts/NotoSans-Regular.ttf");
-
-      if (!response.ok) {
-        throw new Error("Фонтын файл олдсонгүй.");
-      }
-
-      const fontBuffer = await response.arrayBuffer();
-      const fontBytes = new Uint8Array(fontBuffer);
-      let binary = "";
-      const chunkSize = 0x8000;
-
-      for (let i = 0; i < fontBytes.length; i += chunkSize) {
-        binary += String.fromCharCode(
-          ...fontBytes.subarray(i, i + chunkSize)
-        );
-      }
-
-      const fontBase64 = window.btoa(binary);
-      const doc = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-      });
-
-      doc.addFileToVFS("NotoSans-Regular.ttf", fontBase64);
-      doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
-      doc.setFont("NotoSans");
-      doc.setFontSize(16);
-      doc.text("Бүртгэлийн мэдээлэл", 14, 15);
-
-      const rows = registrations.map((registration, index) => [
-        String(index + 1),
-        formatDateTime(registration.date),
-        registration.lastName || "",
-        registration.firstName || "",
-        registration.phone || "",
-        registration.subject || "",
-        registration.note || "-",
-      ]);
-
-      autoTable(doc, {
-        head: [["№", "Огноо", "Овог", "Нэр", "Утас", "Хичээл", "Тайлбар"]],
-        body: rows,
-        startY: 23,
-        styles: {
-          font: "NotoSans",
-          fontSize: 8,
-          cellPadding: 3,
-          overflow: "linebreak",
-        },
-        headStyles: {
-          font: "NotoSans",
-          fontStyle: "normal",
-        },
-        margin: { left: 10, right: 10 },
-      });
-
-      doc.save("burtgeliin-medeelel.pdf");
-    } catch (error) {
-      console.error("PDF үүсгэхэд гарсан алдаа:", error);
-      showNotice(
-        "PDF үүсгэж чадсангүй. Фонтын файл байгаа эсэхийг шалгана уу.",
-        "error"
-      );
-    }
-  };
-
-  // Устгах баталгаажуулалт
-  const handleDelete = (id) => {
-    setModal({
-      message: "Энэ бүртгэлийг устгахдаа итгэлтэй байна уу?",
-      type: "confirm",
-      onConfirm: () => deleteRegistration(id),
-    });
-  };
-
-  const deleteRegistration = async (id) => {
-    setModal(null);
-
-    try {
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        showNotice("Бүртгэл устгахад алдаа гарлаа.", "error");
-        return;
-      }
-
-      showNotice("Бүртгэл амжилттай устгагдлаа!", "success");
-      await loadRegistrations();
-    } catch (error) {
-      console.error("Бүртгэл устгах алдаа:", error);
-      showNotice("Сервертэй холбогдож чадсангүй.", "error");
-    }
-  };
-
-  // Бүртгэл засах
-  const handleEdit = (registration) => {
-    setFormData({
-      date: registration.date
-        ? String(registration.date).slice(0, 16)
-        : "",
-      lastName: registration.lastName || "",
-      firstName: registration.firstName || "",
-      phone: registration.phone || "",
-      subject: registration.subject || "",
-      note: registration.note || "",
-    });
-
-    setEditingId(registration.id);
-  };
-
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-
-    if (!formData.date) {
-      showNotice("Огноо, цагийг оруулна уу.", "error");
-      return;
-    }
-
-    if (!formData.lastName.trim()) {
-      showNotice("Овог оруулна уу.", "error");
-      return;
-    }
-
-    if (!formData.firstName.trim()) {
-      showNotice("Нэр оруулна уу.", "error");
-      return;
-    }
-
-    if (!/^[0-9]{8}$/.test(formData.phone)) {
-      showNotice("Утасны дугаар яг 8 оронтой байх ёстой.", "error");
-      return;
-    }
-
-    if (!formData.subject.trim()) {
-      showNotice("Хичээлийн нэрийг сонгоно уу.", "error");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/${editingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        showNotice("Бүртгэл засахад алдаа гарлаа.", "error");
-        return;
-      }
-
-      showNotice("Бүртгэл амжилттай засагдлаа!", "success");
-      resetForm();
-      setEditingId(null);
-      await loadRegistrations();
-    } catch (error) {
-      console.error("Бүртгэл засах алдаа:", error);
-      showNotice("Сервертэй холбогдож чадсангүй.", "error");
-    }
-  };
-
-  // Огноо болон хайлтын шүүлтүүр
-  // Хуудаслалтаас өмнө шүүнэ. Иймээс хайлт бүх тохирох бүртгэлээс ажиллана.
-  const filteredRegistrations = registrations.filter((registration) => {
-    const registrationDate = String(registration.date || "").slice(0, 10);
-
-    const matchesDate =
-      selectedDate === "" || registrationDate === selectedDate;
-
-    const text = [
-      registration.date,
-      registration.lastName,
-      registration.firstName,
-      registration.phone,
-      registration.subject,
-      registration.note,
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    const matchesSearch = text.includes(search.trim().toLowerCase());
-
-    return matchesDate && matchesSearch;
-  });
-
-  // Өгөгдөлд байгаа өдрүүдийг давхардуулахгүй гаргах
-  const availableDates = [
-    ...new Set(
-      registrations
-        .map((registration) =>
-          String(registration.date || "").slice(0, 10)
-        )
-        .filter(Boolean)
-    ),
-  ].sort((a, b) => b.localeCompare(a));
-
-  // Хуудаслалт
-  const totalPages = Math.ceil(
-    filteredRegistrations.length / itemsPerPage
-  );
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-
-  const paginatedRegistrations = filteredRegistrations.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
-  // Хайлт, өдөр солигдоход эхний хуудас руу буцаах
-  const handleSearchChange = (value) => {
-    setSearch(value);
-    setCurrentPage(1);
-  };
-
-  const handleDateChange = (value) => {
-    setSelectedDate(value);
-    setCurrentPage(1);
-  };
-
+  // Хичээлийн жагсаалт
   const subjects = [
     "Харагддаг ба харагддаггүй ертөнц",
     "Бурханы бүтээл хүн",
@@ -487,6 +100,482 @@ function App() {
     </>
   );
 
+  // Бүртгэлүүдийг серверээс авах
+  const loadRegistrations = async () => {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+
+      if (!response.ok) {
+        showNotice(
+          "Бүртгэлийн мэдээлэл авахад алдаа гарлаа.",
+          "error"
+        );
+        return;
+      }
+
+      setRegistrations(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Бүртгэл ачаалахад алдаа:", error);
+
+      showNotice(
+        "Сервертэй холбогдож чадсангүй. Интернэтээ шалгана уу.",
+        "error"
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadRegistrations();
+    }
+  }, [isAdmin]);
+
+  // Формын талбар өөрчлөх
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  // Формыг цэвэрлэх
+  const resetForm = () => {
+    setFormData({
+      date: getCurrentDateTime(),
+      lastName: "",
+      firstName: "",
+      phone: "",
+      subject: "",
+      invitedBy: "",
+      teacher: "",
+      note: "",
+    });
+  };
+
+  // Шинэ бүртгэл үүсгэх
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (isSaving) return;
+
+    if (!formData.date) {
+      showNotice("Огноо, цагийг оруулна уу.", "error");
+      return;
+    }
+
+    if (!formData.lastName.trim()) {
+      showNotice("Овог оруулна уу.", "error");
+      return;
+    }
+
+    if (!formData.firstName.trim()) {
+      showNotice("Нэр оруулна уу.", "error");
+      return;
+    }
+
+    if (!/^[0-9]{8}$/.test(formData.phone)) {
+      showNotice(
+        "Утасны дугаар яг 8 оронтой байх ёстой.",
+        "error"
+      );
+      return;
+    }
+
+    if (!formData.subject.trim()) {
+      showNotice("Хичээлийн нэрийг сонгоно уу.", "error");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        showNotice("Бүртгэл хадгалахад алдаа гарлаа.", "error");
+        return;
+      }
+
+      showNotice("Бүртгэл амжилттай хадгалагдлаа!", "success");
+
+      resetForm();
+      setShowForm(false);
+
+      if (isAdmin) {
+        await loadRegistrations();
+      }
+    } catch (error) {
+      console.error("Бүртгэл хадгалах алдаа:", error);
+
+      showNotice(
+        "Сервертэй холбогдож чадсангүй. Дахин оролдоно уу.",
+        "error"
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Админ нэвтрэх
+  const handleAdminLogin = async (e) => {
+    e.preventDefault();
+
+    if (isLoggingIn) return;
+
+    setIsLoggingIn(true);
+
+    try {
+      const response = await fetch(LOGIN_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: "admin",
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        showNotice(
+          "Нэвтрэх нэр эсвэл нууц үг буруу байна.",
+          "error"
+        );
+        return;
+      }
+
+      setIsAdmin(true);
+      setShowAdmin(true);
+      setPassword("");
+    } catch (error) {
+      console.error("Админ нэвтрэхэд алдаа:", error);
+      showNotice("Сервертэй холбогдож чадсангүй.", "error");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  // Excel татах
+  const exportToExcel = () => {
+    if (registrations.length === 0) {
+      showNotice("Татаж авах бүртгэл алга байна.", "error");
+      return;
+    }
+
+    const data = registrations.map((registration, index) => ({
+      "№": index + 1,
+      "Огноо": formatDateTime(registration.date),
+      "Овог, Нэр": getFullName(registration),
+      "Утас": registration.phone || "",
+      "Хичээл": registration.subject || "",
+      "Урьсан хүн": registration.invitedBy || "",
+      "Багш": registration.teacher || "",
+      "Тайлбар": registration.note || "",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      "Бүртгэл"
+    );
+
+    XLSX.writeFile(
+      workbook,
+      "burtgeliin-medeelel.xlsx"
+    );
+  };
+
+  // PDF татах
+  const exportToPDF = async () => {
+    if (registrations.length === 0) {
+      showNotice("Татаж авах бүртгэл алга байна.", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch("/fonts/NotoSans-Regular.ttf");
+
+      if (!response.ok) {
+        throw new Error("Фонтын файл олдсонгүй.");
+      }
+
+      const fontBuffer = await response.arrayBuffer();
+      const fontBytes = new Uint8Array(fontBuffer);
+
+      let binary = "";
+      const chunkSize = 0x8000;
+
+      for (let i = 0; i < fontBytes.length; i += chunkSize) {
+        binary += String.fromCharCode(
+          ...fontBytes.subarray(i, i + chunkSize)
+        );
+      }
+
+      const fontBase64 = window.btoa(binary);
+
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+      });
+
+      doc.addFileToVFS(
+        "NotoSans-Regular.ttf",
+        fontBase64
+      );
+
+      doc.addFont(
+        "NotoSans-Regular.ttf",
+        "NotoSans",
+        "normal"
+      );
+
+      doc.setFont("NotoSans");
+      doc.setFontSize(16);
+      doc.text("Бүртгэлийн мэдээлэл", 14, 15);
+
+      const rows = registrations.map(
+        (registration, index) => [
+          String(index + 1),
+          formatDateTime(registration.date),
+          getFullName(registration),
+          registration.phone || "",
+          registration.subject || "",
+          registration.invitedBy || "-",
+          registration.teacher || "-",
+          registration.note || "-",
+        ]
+      );
+
+      autoTable(doc, {
+        head: [
+          [
+            "№",
+            "Огноо",
+            "Овог, Нэр",
+            "Утас",
+            "Хичээл",
+            "Урьсан хүн",
+            "Багш",
+            "Тайлбар",
+          ],
+        ],
+        body: rows,
+        startY: 23,
+        styles: {
+          font: "NotoSans",
+          fontSize: 8,
+          cellPadding: 3,
+          overflow: "linebreak",
+        },
+        headStyles: {
+          font: "NotoSans",
+          fontStyle: "normal",
+        },
+        margin: {
+          left: 10,
+          right: 10,
+        },
+      });
+
+      doc.save("burtgeliin-medeelel.pdf");
+    } catch (error) {
+      console.error("PDF үүсгэхэд гарсан алдаа:", error);
+
+      showNotice(
+        "PDF үүсгэж чадсангүй. Фонтын файл байгаа эсэхийг шалгана уу.",
+        "error"
+      );
+    }
+  };
+
+  // Устгах баталгаажуулалт
+  const handleDelete = (id) => {
+    setModal({
+      message: "Энэ бүртгэлийг устгахдаа итгэлтэй байна уу?",
+      type: "confirm",
+      onConfirm: () => deleteRegistration(id),
+    });
+  };
+
+  // Бүртгэл устгах
+  const deleteRegistration = async (id) => {
+    setModal(null);
+
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        showNotice("Бүртгэл устгахад алдаа гарлаа.", "error");
+        return;
+      }
+
+      showNotice("Бүртгэл амжилттай устгагдлаа!", "success");
+
+      await loadRegistrations();
+    } catch (error) {
+      console.error("Бүртгэл устгах алдаа:", error);
+      showNotice("Сервертэй холбогдож чадсангүй.", "error");
+    }
+  };
+
+  // Бүртгэл засах формд оруулах
+  const handleEdit = (registration) => {
+    setFormData({
+      date: registration.date
+        ? String(registration.date).slice(0, 16)
+        : "",
+      lastName: registration.lastName || "",
+      firstName: registration.firstName || "",
+      phone: registration.phone || "",
+      subject: registration.subject || "",
+      invitedBy: registration.invitedBy || "",
+      teacher: registration.teacher || "",
+      note: registration.note || "",
+    });
+
+    setEditingId(registration.id);
+  };
+
+  // Зассан мэдээллийг хадгалах
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+
+    if (!formData.date) {
+      showNotice("Огноо, цагийг оруулна уу.", "error");
+      return;
+    }
+
+    if (!formData.lastName.trim()) {
+      showNotice("Овог оруулна уу.", "error");
+      return;
+    }
+
+    if (!formData.firstName.trim()) {
+      showNotice("Нэр оруулна уу.", "error");
+      return;
+    }
+
+    if (!/^[0-9]{8}$/.test(formData.phone)) {
+      showNotice(
+        "Утасны дугаар яг 8 оронтой байх ёстой.",
+        "error"
+      );
+      return;
+    }
+
+    if (!formData.subject.trim()) {
+      showNotice("Хичээлийн нэрийг сонгоно уу.", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/${editingId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        showNotice("Бүртгэл засахад алдаа гарлаа.", "error");
+        return;
+      }
+
+      showNotice("Бүртгэл амжилттай засагдлаа!", "success");
+
+      resetForm();
+      setEditingId(null);
+
+      await loadRegistrations();
+    } catch (error) {
+      console.error("Бүртгэл засах алдаа:", error);
+      showNotice("Сервертэй холбогдож чадсангүй.", "error");
+    }
+  };
+
+  // Хайлт болон огноогоор шүүх
+  const filteredRegistrations = registrations.filter(
+    (registration) => {
+      const registrationDate = String(
+        registration.date || ""
+      ).slice(0, 10);
+
+      const matchesDate =
+        selectedDate === "" ||
+        registrationDate === selectedDate;
+
+      const text = [
+        registration.date,
+        registration.lastName,
+        registration.firstName,
+        registration.phone,
+        registration.subject,
+        registration.invitedBy,
+        registration.teacher,
+        registration.note,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = text.includes(
+        search.trim().toLowerCase()
+      );
+
+      return matchesDate && matchesSearch;
+    }
+  );
+
+  // Бүртгэлтэй өдрүүд
+  const availableDates = [
+    ...new Set(
+      registrations
+        .map((registration) =>
+          String(registration.date || "").slice(0, 10)
+        )
+        .filter(Boolean)
+    ),
+  ].sort((a, b) => b.localeCompare(a));
+
+  // Хуудаслалт
+  const totalPages = Math.ceil(
+    filteredRegistrations.length / itemsPerPage
+  );
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+
+  const paginatedRegistrations =
+    filteredRegistrations.slice(
+      startIndex,
+      startIndex + itemsPerPage
+    );
+
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
+  const handleDateChange = (value) => {
+    setSelectedDate(value);
+    setCurrentPage(1);
+  };
+
+  // Засах болон устгах товч
   const renderRegistrationActions = (registration) => (
     <div className="action-buttons">
       <button
@@ -497,6 +586,7 @@ function App() {
       >
         ✏️
       </button>
+
       <button
         type="button"
         className="delete-button"
@@ -508,16 +598,41 @@ function App() {
     </div>
   );
 
+  // Хуудасны товчнууд
   const renderPagination = () => {
     if (filteredRegistrations.length === 0) return null;
+
+    const pageNumbers = Array.from(
+      { length: totalPages },
+      (_, index) => index + 1
+    )
+      .filter(
+        (page) =>
+          page === 1 ||
+          page === totalPages ||
+          Math.abs(page - currentPage) <= 1
+      )
+      .reduce((result, page, index, pages) => {
+        if (
+          index > 0 &&
+          page - pages[index - 1] > 1
+        ) {
+          result.push("...");
+        }
+
+        result.push(page);
+        return result;
+      }, []);
 
     return (
       <div className="pagination">
         <p className="pagination-summary">
-          {startIndex + 1}–{Math.min(
+          {startIndex + 1}–
+          {Math.min(
             startIndex + itemsPerPage,
             filteredRegistrations.length
-          )} / {filteredRegistrations.length} бүртгэл
+          )}{" "}
+          / {filteredRegistrations.length} бүртгэл
         </p>
 
         <div className="pagination-controls">
@@ -526,53 +641,46 @@ function App() {
             className="secondary-button"
             disabled={currentPage <= 1}
             onClick={() =>
-              setCurrentPage((page) => Math.max(1, page - 1))
+              setCurrentPage((page) =>
+                Math.max(1, page - 1)
+              )
             }
           >
             ← Өмнөх
           </button>
 
-          {Array.from({ length: totalPages }, (_, index) => index + 1)
-            .filter(
-              (page) =>
-                page === 1 ||
-                page === totalPages ||
-                Math.abs(page - currentPage) <= 1
+          {pageNumbers.map((page, index) =>
+            page === "..." ? (
+              <span
+                className="pagination-ellipsis"
+                key={`dots-${index}`}
+              >
+                …
+              </span>
+            ) : (
+              <button
+                type="button"
+                key={page}
+                className={
+                  page === currentPage
+                    ? "pagination-number active"
+                    : "pagination-number"
+                }
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </button>
             )
-            .reduce((result, page, index, pages) => {
-              if (index > 0 && page - pages[index - 1] > 1) {
-                result.push("...");
-              }
-              result.push(page);
-              return result;
-            }, [])
-            .map((page, index) =>
-              page === "..." ? (
-                <span className="pagination-ellipsis" key={`dots-${index}`}>
-                  …
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  key={page}
-                  className={
-                    page === currentPage
-                      ? "pagination-number active"
-                      : "pagination-number"
-                  }
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </button>
-              )
-            )}
+          )}
 
           <button
             type="button"
             className="secondary-button"
             disabled={currentPage >= totalPages}
             onClick={() =>
-              setCurrentPage((page) => Math.min(totalPages, page + 1))
+              setCurrentPage((page) =>
+                Math.min(totalPages, page + 1)
+              )
             }
           >
             Дараах →
@@ -582,6 +690,124 @@ function App() {
     );
   };
 
+  // Нэрийн талбар
+  const renderNameInput = (name, label, placeholder) => (
+    <div className="form-group">
+      <label>{label}</label>
+      <input
+        type="text"
+        name={name}
+        value={formData[name]}
+        onChange={(e) =>
+          setFormData((prev) => ({
+            ...prev,
+            [name]: e.target.value.replace(
+              /[^a-zA-Zа-яА-ЯөүӨҮёЁ\s]/g,
+              ""
+            ),
+          }))
+        }
+        placeholder={placeholder}
+        required
+      />
+    </div>
+  );
+
+  // Утасны талбар
+  const renderPhoneInput = () => (
+    <div className="form-group">
+      <label>Утасны дугаар</label>
+      <input
+        type="text"
+        name="phone"
+        placeholder="99112233"
+        value={formData.phone}
+        onChange={(e) =>
+          setFormData((prev) => ({
+            ...prev,
+            phone: e.target.value
+              .replace(/[^0-9]/g, "")
+              .slice(0, 8),
+          }))
+        }
+        inputMode="numeric"
+        maxLength={8}
+        required
+      />
+    </div>
+  );
+
+  // Урьсан хүн болон багшийн талбар
+  const renderInvitedByAndTeacher = () => (
+    <>
+      <div className="form-group">
+        <label>Урьсан хүн</label>
+        <input
+          type="text"
+          name="invitedBy"
+          value={formData.invitedBy}
+          onChange={handleChange}
+          placeholder="Урьсан хүний нэр"
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Багш</label>
+        <input
+          type="text"
+          name="teacher"
+          value={formData.teacher}
+          onChange={handleChange}
+          placeholder="Багшийн нэр"
+        />
+      </div>
+    </>
+  );
+
+  // Бүртгэл үүсгэх болон засахад ашиглах талбарууд
+  const renderRegistrationFields = () => (
+    <div className="form-grid">
+      <div className="form-group">
+        <label>Огноо</label>
+        <input
+          type="datetime-local"
+          name="date"
+          value={formData.date}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      {renderNameInput("lastName", "Овог", "Овог")}
+      {renderNameInput("firstName", "Нэр", "Нэр")}
+      {renderPhoneInput()}
+
+      <div className="form-group full">
+        <label>Хичээл</label>
+        <select
+          name="subject"
+          value={formData.subject}
+          onChange={handleChange}
+          required
+        >
+          {renderSubjectOptions()}
+        </select>
+      </div>
+
+      {renderInvitedByAndTeacher()}
+
+      <div className="form-group full">
+        <label>Тайлбар</label>
+        <textarea
+          name="note"
+          placeholder="Нэмэлт тайлбар..."
+          value={formData.note}
+          onChange={handleChange}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="app">
       <header className="header">
@@ -589,17 +815,21 @@ function App() {
           <h1>Бүртгэлийн систем</h1>
           <p>Мэдээлэл бүртгэл ба удирдлагын систем</p>
         </div>
-        {isAdmin && <div className="admin-badge">🔐 Админ</div>}
+
+        {isAdmin && (
+          <div className="admin-badge">🔐 Админ</div>
+        )}
       </header>
 
+      {/* Нүүр хуудас */}
       {!showForm && !showAdmin && (
         <main className="home">
-         
-<div className="welcome">
-  <h2>Тавтай морилно уу 👋</h2>
-  <p>Бүртгэл үүсгэх эсвэл админ хэсэгт нэвтэрнэ үү.</p>
-</div>
-
+          <div className="welcome">
+            <h2>Тавтай морилно уу 👋</h2>
+            <p>
+              Бүртгэл үүсгэх эсвэл админ хэсэгт нэвтэрнэ үү.
+            </p>
+          </div>
 
           <div className="home-buttons">
             <button
@@ -608,6 +838,7 @@ function App() {
             >
               📝 Бүртгэл үүсгэх
             </button>
+
             <button
               className="secondary-button"
               onClick={() => setShowAdmin(true)}
@@ -618,6 +849,7 @@ function App() {
         </main>
       )}
 
+      {/* Шинэ бүртгэл */}
       {showForm && (
         <main className="card">
           <div className="card-title">
@@ -626,101 +858,7 @@ function App() {
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Огноо</label>
-                <input
-                  type="datetime-local"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Овог</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      lastName: e.target.value.replace(
-                        /[^a-zA-Zа-яА-ЯөүӨҮёЁ\s]/g,
-                        ""
-                      ),
-                    }))
-                  }
-                  placeholder="Овог"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Нэр</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      firstName: e.target.value.replace(
-                        /[^a-zA-Zа-яА-ЯөүӨҮёЁ\s]/g,
-                        ""
-                      ),
-                    }))
-                  }
-                  placeholder="Нэр"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Утасны дугаар</label>
-                <input
-                  type="text"
-                  name="phone"
-                  placeholder="99112233"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      phone: e.target.value
-                        .replace(/[^0-9]/g, "")
-                        .slice(0, 8),
-                    }))
-                  }
-                  inputMode="numeric"
-                  maxLength={8}
-                  required
-                />
-              </div>
-
-              <div className="form-group full">
-                <label>Хичээл</label>
-                <select
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  required
-                >
-                  {renderSubjectOptions()}
-                </select>
-              </div>
-
-              <div className="form-group full">
-                <label>Тайлбар</label>
-                <textarea
-                  name="note"
-                  placeholder="Нэмэлт тайлбар..."
-                  value={formData.note}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
+            {renderRegistrationFields()}
 
             <div className="form-buttons">
               <button
@@ -728,8 +866,11 @@ function App() {
                 className="main-button"
                 disabled={isSaving}
               >
-                {isSaving ? "Хадгалж байна..." : "💾 Хадгалах"}
+                {isSaving
+                  ? "Хадгалж байна..."
+                  : "💾 Хадгалах"}
               </button>
+
               <button
                 type="button"
                 className="secondary-button"
@@ -745,11 +886,14 @@ function App() {
         </main>
       )}
 
+      {/* Админ нэвтрэх */}
       {showAdmin && !isAdmin && (
         <main className="login-card">
           <div className="login-icon">🔐</div>
           <h2>Админ нэвтрэх</h2>
-          <p>Админ хэсэгт нэвтрэхийн тулд нууц үгээ оруулна уу.</p>
+          <p>
+            Админ хэсэгт нэвтрэхийн тулд нууц үгээ оруулна уу.
+          </p>
 
           <form onSubmit={handleAdminLogin}>
             <input
@@ -759,14 +903,17 @@ function App() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            
-<button
-  type="submit"
-  className="main-button"
-  disabled={isLoggingIn}
->
-  {isLoggingIn ? "Нэвтэрч байна..." : "Нэвтрэх"}
-</button>
+
+            <button
+              type="submit"
+              className="main-button"
+              disabled={isLoggingIn}
+            >
+              {isLoggingIn
+                ? "Нэвтэрч байна..."
+                : "Нэвтрэх"}
+            </button>
+
             <button
               type="button"
               className="secondary-button"
@@ -781,6 +928,7 @@ function App() {
         </main>
       )}
 
+      {/* Админ хэсэг */}
       {showAdmin && isAdmin && (
         <main className="admin">
           <div className="admin-top">
@@ -788,6 +936,7 @@ function App() {
               <h2>Админ хэсэг</h2>
               <p>Бүртгэлүүдийг эндээс удирдана.</p>
             </div>
+
             <button
               className="logout-button"
               onClick={() => {
@@ -804,107 +953,22 @@ function App() {
             </button>
           </div>
 
+          {/* Бүртгэл засах */}
           {editingId !== null && (
             <div className="edit-card">
               <h3>✏️ Бүртгэл засах</h3>
 
               <form onSubmit={handleUpdate} noValidate>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Огноо</label>
-                    <input
-                      type="datetime-local"
-                      name="date"
-                      value={formData.date}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Овог</label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          lastName: e.target.value.replace(
-                            /[^a-zA-Zа-яА-ЯөүӨҮёЁ\s]/g,
-                            ""
-                          ),
-                        }))
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Нэр</label>
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          firstName: e.target.value.replace(
-                            /[^a-zA-Zа-яА-ЯөүӨҮёЁ\s]/g,
-                            ""
-                          ),
-                        }))
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Утас</label>
-                    <input
-                      type="text"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          phone: e.target.value
-                            .replace(/[^0-9]/g, "")
-                            .slice(0, 8),
-                        }))
-                      }
-                      inputMode="numeric"
-                      maxLength={8}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group full">
-                    <label>Хичээл</label>
-                    <select
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      required
-                    >
-                      {renderSubjectOptions()}
-                    </select>
-                  </div>
-
-                  <div className="form-group full">
-                    <label>Тайлбар</label>
-                    <textarea
-                      name="note"
-                      value={formData.note}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
+                {renderRegistrationFields()}
 
                 <div className="form-buttons">
-                  <button type="submit" className="main-button">
+                  <button
+                    type="submit"
+                    className="main-button"
+                  >
                     💾 Өөрчлөлтийг хадгалах
                   </button>
+
                   <button
                     type="button"
                     className="secondary-button"
@@ -920,25 +984,32 @@ function App() {
             </div>
           )}
 
+          {/* Хайлт, огноо, Excel/PDF */}
           {editingId === null && (
             <div className="search-box">
               <input
                 type="text"
-                placeholder="🔎 Бүх бүртгэлээс нэр, утас, хичээлээр хайх..."
+                placeholder="🔎 Нэр, утас, хичээл, урьсан хүн, багшаар хайх..."
                 value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
+                onChange={(e) =>
+                  handleSearchChange(e.target.value)
+                }
               />
 
               <div className="date-filter">
                 <label htmlFor="registration-date-filter">
                   📅 Өдрөөр харах
                 </label>
+
                 <select
                   id="registration-date-filter"
                   value={selectedDate}
-                  onChange={(e) => handleDateChange(e.target.value)}
+                  onChange={(e) =>
+                    handleDateChange(e.target.value)
+                  }
                 >
                   <option value="">Бүх өдөр</option>
+
                   {availableDates.map((date) => (
                     <option key={date} value={date}>
                       {date}
@@ -948,21 +1019,30 @@ function App() {
               </div>
 
               <div className="export-buttons">
-                <button className="excel-button" onClick={exportToExcel}>
+                <button
+                  className="excel-button"
+                  onClick={exportToExcel}
+                >
                   📊 Excel татах
                 </button>
-                <button className="pdf-button" onClick={exportToPDF}>
+
+                <button
+                  className="pdf-button"
+                  onClick={exportToPDF}
+                >
                   📄 PDF татах
                 </button>
               </div>
             </div>
           )}
 
+          {/* Статистик */}
           <div className="statistics">
             <div className="stat-card">
               <span>Нийт бүртгэл</span>
               <strong>{registrations.length}</strong>
             </div>
+
             <div className="stat-card">
               <span>Шүүлтүүрийн үр дүн</span>
               <strong>{filteredRegistrations.length}</strong>
@@ -983,31 +1063,56 @@ function App() {
                   <tr>
                     <th>№</th>
                     <th>Огноо</th>
-                    <th>Овог</th>
-                    <th>Нэр</th>
+                    <th>Овог, Нэр</th>
                     <th>Утас</th>
                     <th>Хичээл</th>
+                    <th>Урьсан хүн</th>
+                    <th>Багш</th>
                     <th>Тайлбар</th>
                     <th>Үйлдэл</th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {paginatedRegistrations.map((registration, index) => (
-                    <tr key={registration.id}>
-                      <td>{startIndex + index + 1}</td>
-                      <td>{formatDateTime(registration.date)}</td>
-                      <td>{registration.lastName}</td>
-                      <td><strong>{registration.firstName}</strong></td>
-                      <td>{registration.phone}</td>
-                      <td>
-                        <span className="subject">
-                          {registration.subject}
-                        </span>
-                      </td>
-                      <td>{registration.note || "-"}</td>
-                      <td>{renderRegistrationActions(registration)}</td>
-                    </tr>
-                  ))}
+                  {paginatedRegistrations.map(
+                    (registration, index) => (
+                      <tr key={registration.id}>
+                        <td>{startIndex + index + 1}</td>
+
+                        <td>
+                          {formatDateTime(registration.date)}
+                        </td>
+
+                        <td>
+                          <strong>
+                            {getFullName(registration)}
+                          </strong>
+                        </td>
+
+                        <td>{registration.phone || "-"}</td>
+
+                        <td>
+                          <span className="subject">
+                            {registration.subject || "-"}
+                          </span>
+                        </td>
+
+                        <td>
+                          {registration.invitedBy || "-"}
+                        </td>
+
+                        <td>{registration.teacher || "-"}</td>
+
+                        <td>{registration.note || "-"}</td>
+
+                        <td>
+                          {renderRegistrationActions(
+                            registration
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  )}
                 </tbody>
               </table>
             )}
@@ -1022,57 +1127,87 @@ function App() {
                 <p>Хайлтад тохирох мэдээлэл байхгүй байна.</p>
               </div>
             ) : (
-              paginatedRegistrations.map((registration, index) => (
-                <article
-                  className="mobile-registration-card"
-                  key={registration.id}
-                >
-                  <div className="mobile-card-heading">
-                    <span className="mobile-number">
-                      № {startIndex + index + 1}
-                    </span>
-                    <span className="subject">
-                      {registration.subject}
-                    </span>
-                  </div>
+              paginatedRegistrations.map(
+                (registration, index) => (
+                  <article
+                    className="mobile-registration-card"
+                    key={registration.id}
+                  >
+                    <div className="mobile-card-heading">
+                      <span className="mobile-number">
+                        № {startIndex + index + 1}
+                      </span>
 
-                  <h3 className="mobile-person-name">
-                    {registration.lastName} {registration.firstName}
-                  </h3>
+                      <span className="subject">
+                        {registration.subject || "-"}
+                      </span>
+                    </div>
 
-                  <div className="mobile-card-details">
-                    <div className="mobile-detail">
-                      <span>📅 Огноо</span>
-                      <strong>{formatDateTime(registration.date)}</strong>
-                    </div>
-                    <div className="mobile-detail">
-                      <span>📞 Утас</span>
-                      <strong>{registration.phone || "-"}</strong>
-                    </div>
-                    <div className="mobile-detail mobile-note">
-                      <span>📝 Тайлбар</span>
-                      <strong>{registration.note || "-"}</strong>
-                    </div>
-                  </div>
+                    <h3 className="mobile-person-name">
+                      {getFullName(registration)}
+                    </h3>
 
-                  <div className="mobile-card-actions">
-                    <button
-                      type="button"
-                      className="edit-button"
-                      onClick={() => handleEdit(registration)}
-                    >
-                      ✏️ Засах
-                    </button>
-                    <button
-                      type="button"
-                      className="delete-button"
-                      onClick={() => handleDelete(registration.id)}
-                    >
-                      🗑️ Устгах
-                    </button>
-                  </div>
-                </article>
-              ))
+                    <div className="mobile-card-details">
+                      <div className="mobile-detail">
+                        <span>📅 Огноо</span>
+                        <strong>
+                          {formatDateTime(registration.date)}
+                        </strong>
+                      </div>
+
+                      <div className="mobile-detail">
+                        <span>📞 Утас</span>
+                        <strong>
+                          {registration.phone || "-"}
+                        </strong>
+                      </div>
+
+                      <div className="mobile-detail">
+                        <span>🙋 Урьсан хүн</span>
+                        <strong>
+                          {registration.invitedBy || "-"}
+                        </strong>
+                      </div>
+
+                      <div className="mobile-detail">
+                        <span>👩‍🏫 Багш</span>
+                        <strong>
+                          {registration.teacher || "-"}
+                        </strong>
+                      </div>
+
+                      <div className="mobile-detail mobile-note">
+                        <span>📝 Тайлбар</span>
+                        <strong>
+                          {registration.note || "-"}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="mobile-card-actions">
+                      <button
+                        type="button"
+                        className="edit-button"
+                        onClick={() =>
+                          handleEdit(registration)
+                        }
+                      >
+                        ✏️ Засах
+                      </button>
+
+                      <button
+                        type="button"
+                        className="delete-button"
+                        onClick={() =>
+                          handleDelete(registration.id)
+                        }
+                      >
+                        🗑️ Устгах
+                      </button>
+                    </div>
+                  </article>
+                )
+              )
             )}
           </div>
 
@@ -1080,29 +1215,31 @@ function App() {
         </main>
       )}
 
-    
       <footer
-  style={{
-    display: "block",
-    width: "100%",
-    textAlign: "center",
-    marginTop: !showForm && !showAdmin ? "20px" : "80px",
-    padding: "12px 10px 20px",
-    color: "#222222",
-    backgroundColor: "transparent",
-    fontSize: "12px",
-    fontWeight: "400",
-  }}
->
-  © МСС МХХАлба
-</footer>
+        style={{
+          display: "block",
+          width: "100%",
+          textAlign: "center",
+          marginTop:
+            !showForm && !showAdmin ? "20px" : "80px",
+          padding: "12px 10px 20px",
+          color: "#222222",
+          backgroundColor: "transparent",
+          fontSize: "12px",
+          fontWeight: "400",
+        }}
+      >
+        © МСС МХХАлба
+      </footer>
 
-
+      {/* Мэдэгдэл болон устгах баталгаажуулалт */}
       {modal && (
         <div
           className="modal-overlay"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setModal(null);
+            if (e.target === e.currentTarget) {
+              setModal(null);
+            }
           }}
         >
           <div
@@ -1140,6 +1277,7 @@ function App() {
                   >
                     Болих
                   </button>
+
                   <button
                     type="button"
                     className="delete-button"

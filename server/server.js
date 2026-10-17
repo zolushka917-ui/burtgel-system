@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
   res.send('Backend ажиллаж байна!')
 })
 
-// Бүх бүртгэл харах
+// Бүх бүртгэл
 app.get('/api/registrations', async (req, res) => {
   try {
     const result = await db.query(
@@ -30,9 +30,12 @@ app.get('/api/registrations', async (req, res) => {
 // Шинэ бүртгэл нэмэх
 app.post('/api/registrations', async (req, res) => {
   try {
-    const { date, lastName, firstName, phone, subject, note } = req.body
+    const {
+      date, lastName, firstName, phone,
+      subject, invitedBy, teacher, note
+    } = req.body
 
-    if (!date || !lastName || !firstName || !phone) {
+    if (!date || !lastName?.trim() || !firstName?.trim() || !phone) {
       return res.status(400).json({
         message: 'Огноо, овог, нэр, утас заавал бөглөнө үү.'
       })
@@ -40,10 +43,13 @@ app.post('/api/registrations', async (req, res) => {
 
     const result = await db.query(
       `INSERT INTO registrations
-       (date, "lastName", "firstName", phone, subject, note)
-       VALUES ($1, $2, $3, $4, $5, $6)
+       (date, "lastName", "firstName", phone, subject, "invitedBy", teacher, note)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [date, lastName, firstName, phone, subject || '', note || '']
+      [
+        date, lastName.trim(), firstName.trim(), phone,
+        subject || '', invitedBy || '', teacher || '', note || ''
+      ]
     )
 
     res.status(201).json(result.rows[0])
@@ -57,13 +63,16 @@ app.post('/api/registrations', async (req, res) => {
 app.put('/api/registrations/:id', async (req, res) => {
   try {
     const id = Number(req.params.id)
-    const { date, lastName, firstName, phone, subject, note } = req.body
+    const {
+      date, lastName, firstName, phone,
+      subject, invitedBy, teacher, note
+    } = req.body
 
     if (!Number.isInteger(id) || id < 1) {
       return res.status(400).json({ message: 'Бүртгэлийн дугаар буруу байна.' })
     }
 
-    if (!date || !lastName || !firstName || !phone) {
+    if (!date || !lastName?.trim() || !firstName?.trim() || !phone) {
       return res.status(400).json({
         message: 'Огноо, овог, нэр, утас заавал бөглөнө үү.'
       })
@@ -71,11 +80,20 @@ app.put('/api/registrations/:id', async (req, res) => {
 
     const result = await db.query(
       `UPDATE registrations
-       SET date = $1, "lastName" = $2, "firstName" = $3,
-           phone = $4, subject = $5, note = $6
-       WHERE id = $7
+       SET date = $1,
+           "lastName" = $2,
+           "firstName" = $3,
+           phone = $4,
+           subject = $5,
+           "invitedBy" = $6,
+           teacher = $7,
+           note = $8
+       WHERE id = $9
        RETURNING *`,
-      [date, lastName, firstName, phone, subject || '', note || '', id]
+      [
+        date, lastName.trim(), firstName.trim(), phone,
+        subject || '', invitedBy || '', teacher || '', note || '', id
+      ]
     )
 
     if (result.rows.length === 0) {
@@ -194,7 +212,6 @@ app.put('/api/change-password', async (req, res) => {
   }
 })
 
-// Өгөгдлийн сан бэлэн болсны дараа серверийг асаана
 async function startServer() {
   try {
     await initDb()
